@@ -1,0 +1,27 @@
+{
+  "users": [
+    {
+      "name": "admin",
+      "password": "$2a$14$kK02bNW84s8XmPild5Io2O.mTJdx9EaslBQIPFwaUqQP3TSO269yS",
+      "grants": [
+        "*/*",
+        "admin/*"
+      ]
+    },
+    {
+      "name": "bob",
+      "password": "$2a$14$xnSmhVmXYfrP88Jnv6hH.O2czMCumcyK.rOGVCLGZSrtTu3R5dxMC",
+      "grants": [
+        "bob/*"
+      ]
+    },
+    {
+      "name": "alice",
+      "password": "$2a$14$4Y0RmaPQqcfnTcZ330Iw8e2CFcfQG50bpLe7YDhAF4u1mW7NMmJYi",
+      "grants": [
+        "bob/*",
+        "alice/*"
+      ]
+    }
+  ]
+}

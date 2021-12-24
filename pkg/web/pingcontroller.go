@@ -3,10 +3,15 @@ package web
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"pynenborg.com/go-auth/pkg/domain"
 )
 
 type PingController struct {
+	userService domain.UserService
+}
 
+func NewPingController(service domain.UserService) domain.Controller {
+	return &PingController{userService: service}
 }
 
 func (p PingController) Setup(r *gin.Engine) {
