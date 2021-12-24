@@ -10,6 +10,7 @@ import (
 	"os"
 	"pynenborg.com/go-auth/pkg/domain"
 	"pynenborg.com/go-auth/pkg/util/log"
+	"time"
 )
 
 const (
@@ -73,14 +74,14 @@ func unmarshal(userFile *os.File) map[string]domain.User {
 	return users
 }
 
-func (us DefaultUserService) Login(name string, password []byte) (string, *domain.HttpError) {
+func (us DefaultUserService) Login(name string, password string) (string, *domain.HttpError) {
 	user, err := us.Get(name)
 
 	if err != nil {
 		return "", err
 	}
 
-	passwordMatches := bcrypt.CompareHashAndPassword([]byte(user.Password), password) == nil
+	passwordMatches := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil
 
 	if !passwordMatches {
 		return "", &domain.HttpError{
@@ -108,10 +109,12 @@ func generateJwt(user domain.User) (string, *domain.HttpError) {
 }
 
 func createClaims(user domain.User) customClaims {
+	expiresAt := time.Now().Unix() + 3600
+
 	return customClaims{
 		Username: user.Name,
 		Grants: user.Grants,
-		StandardClaims: jwt.StandardClaims{ExpiresAt: 15000, Issuer: "go-auth.pynenborg.com"},
+		StandardClaims: jwt.StandardClaims{ExpiresAt: expiresAt, Issuer: "go-auth.pynenborg.com"},
 	}
 }
 
