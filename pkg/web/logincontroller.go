@@ -27,7 +27,7 @@ func (l LoginController) login(c *gin.Context) {
 	var loginRequest LoginRequest
 
 	if err := c.BindJSON(&loginRequest); err != nil {
-
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Internal Server Error"})
 	}
 
 	jwt, httpError := l.userService.Login(loginRequest.Name, loginRequest.Password)
