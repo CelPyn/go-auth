@@ -3,10 +3,17 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"pynenborg.com/go-auth/pkg/domain"
 	"pynenborg.com/go-auth/pkg/util/log"
+)
+
+const (
+	PRIVATE_SECRET = "super-secret-private-key"
 )
 
 type DefaultUserService struct {
@@ -16,6 +23,12 @@ type DefaultUserService struct {
 
 type users struct {
 	Users []domain.User `json:"users"`
+}
+
+type customClaims struct {
+	Username string `json:"username"`
+	Grants []string `json:"grants"`
+	jwt.StandardClaims
 }
 
 func NewUserService(usersPath string) DefaultUserService {
@@ -60,10 +73,57 @@ func unmarshal(userFile *os.File) map[string]domain.User {
 	return users
 }
 
-func (us DefaultUserService) Login(name *string, password*string) error {
-	return nil
+func (us DefaultUserService) Login(name string, password []byte) (string, *domain.HttpError) {
+	user, err := us.Get(name)
+
+	if err != nil {
+		return "", err
+	}
+
+	passwordMatches := bcrypt.CompareHashAndPassword([]byte(user.Password), password) == nil
+
+	if !passwordMatches {
+		return "", &domain.HttpError{
+			Message: fmt.Sprintf("Login attempt for user %s failed: password did not match", name),
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	return generateJwt(user)
 }
 
-func (us DefaultUserService) Get(name *string) domain.User {
-	return us.users[*name]
+func generateJwt(user domain.User) (string, *domain.HttpError) {
+	claims := createClaims(user)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedString, signError := token.SignedString([]byte(PRIVATE_SECRET))
+
+	if signError != nil {
+		return "", &domain.HttpError{
+			Message: fmt.Sprintf("Something went wrong while generating JWT for user [%s]", user.Name),
+			Status:  http.StatusInternalServerError,
+		}
+	}
+
+	return signedString, nil
+}
+
+func createClaims(user domain.User) customClaims {
+	return customClaims{
+		Username: user.Name,
+		Grants: user.Grants,
+		StandardClaims: jwt.StandardClaims{ExpiresAt: 15000, Issuer: "go-auth.pynenborg.com"},
+	}
+}
+
+func (us DefaultUserService) Get(name string) (domain.User, *domain.HttpError) {
+	user := us.users[name]
+
+	if user.Name == "" {
+		return user, &domain.HttpError{
+			Message: fmt.Sprintf("User [%s] could not be found", name),
+			Status:  http.StatusNotFound,
+		}
+	}
+
+	return user, nil
 }
