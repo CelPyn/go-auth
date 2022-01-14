@@ -33,7 +33,7 @@ func (l LoginController) login(c *gin.Context) {
 	jwt, httpError := l.userService.Login(loginRequest.Name, loginRequest.Password)
 
 	if httpError != nil {
-		c.JSON(httpError.Status, gin.H{"message": httpError.Message})
+		c.JSON(httpError.Status, gin.H{"message": httpError.Message, "cause": httpError.Cause})
 	} else {
 		c.JSON(http.StatusOK, gin.H{"token": jwt})
 	}

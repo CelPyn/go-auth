@@ -1,7 +1,7 @@
 package domain
 
 type User struct {
-	Name string `json:"name"`
-	Password string `json:"password"`
-	Grants []string `json:"grants"`
+	Name string `bson:"name"`
+	Password string `bson:"password"`
+	Grants []string `bson:"grants"`
 }
